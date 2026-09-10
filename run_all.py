@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-一键运行：复制 → 重命名 → 连拍分组
+一键运行：复制 → 重命名
 
 用法:
   python run_all.py                  # 完整流程（每步询问确认）
@@ -8,17 +8,22 @@
   python run_all.py --dry            # 预览模式（不修改任何文件）
   python run_all.py --skip-copy      # 跳过复制步骤
   python run_all.py --skip-rename    # 跳过重命名步骤
-  python run_all.py --skip-group     # 跳过连拍分组
 """
 
 import sys
 import subprocess
+from pathlib import Path
+from datetime import datetime
 
-SCRIPTS_DIR = Path(__file__).parent
+SCRIPT_DIR = Path(__file__).parent
+
+# 导入配置
+sys.path.insert(0, str(SCRIPT_DIR))
+from config import TARGET_DIR, CLIP_DIR
+
 
 def run_step(script_name: str, label: str, extra_args: list = None) -> int:
-    """Run a step script, return its exit code."""
-    script = SCRIPTS_DIR / script_name
+    script = SCRIPT_DIR / script_name
     cmd = [sys.executable, str(script)] + (extra_args or [])
     print(f"\n{'='*50}")
     print(f"  {label}")
@@ -35,11 +40,8 @@ def main():
     dry_run = "--dry" in args
     skip_copy = "--skip-copy" in args
     skip_rename = "--skip-rename" in args
-    skip_group = "--skip-group" in args
 
-    extra = ["--dry"] if dry_run else []
-    if yes_mode and not dry_run:
-        extra = ["--yes"]  # 传给 group_bursts.py
+    extra = ["--dry"] if dry_run else ["--yes"] if yes_mode else []
 
     print(f"📅  日期: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
     print(f"📁  目标: {TARGET_DIR}")
@@ -70,12 +72,6 @@ def main():
     else:
         print("⏩  跳过视频重命名")
 
-    # Step 3 — 连拍分组
-    if not skip_group:
-        run_step("group_bursts.py", "Step 3 — 连拍照片分组", extra)
-    else:
-        print("⏩  跳过连拍分组")
-
     print(f"\n{'='*50}")
     print(f"  🎉  全部完成！")
     print(f"  文件位置: {TARGET_DIR}")
@@ -84,11 +80,4 @@ def main():
 
 
 if __name__ == "__main__":
-    from pathlib import Path
-    from datetime import datetime
-
-    # 临时导入配置
-    sys.path.insert(0, str(Path(__file__).parent))
-    from config import TARGET_DIR, CLIP_DIR
-
     main()

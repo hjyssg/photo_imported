@@ -82,7 +82,7 @@ def rename_file(src: Path, dry: bool) -> str:
 
 def main():
     dry_run = "--dry" in sys.argv
-    go_mode = "--go" in sys.argv
+    go_mode = "--go" in sys.argv or "--yes" in sys.argv
 
     if not dry_run and not go_mode:
         print("用法:")

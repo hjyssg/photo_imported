@@ -41,7 +41,10 @@ def main():
     skip_copy = "--skip-copy" in args
     skip_rename = "--skip-rename" in args
 
-    extra = ["--dry"] if dry_run else ["--yes"] if yes_mode else []
+    # 各步骤按模式生成正确参数：
+    #   copy_files.py 支持 --dry（预览）；rename_*.py 需要 --dry 或 --go
+    copy_extra = ["--dry"] if dry_run else []
+    rename_extra = ["--dry"] if dry_run else ["--go"]
 
     print(f"📅  日期: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
     print(f"📁  目标: {TARGET_DIR}")
@@ -51,7 +54,7 @@ def main():
 
     # Step 1 — 复制
     if not skip_copy:
-        rc = run_step("copy_files.py", "Step 1 — 复制文件", extra)
+        rc = run_step("copy_files.py", "Step 1 — 复制文件", copy_extra)
         if rc != 0 and not yes_mode:
             ans = input("\n复制步骤有错误，继续下一步？(Y/n): ")
             if ans and ans.lower() != "y":
@@ -60,17 +63,18 @@ def main():
     else:
         print("⏩  跳过复制步骤")
 
-    # Step 2a — 照片重命名
+    # Step 2 — 重命名（每步确认模式下先询问再执行，避免静默失败）
     if not skip_rename:
-        run_step("rename_photos.py", "Step 2a — 照片重命名", extra)
+        if not dry_run and not yes_mode:
+            ans = input("\n复制完成。是否继续按时间重命名照片+视频？(Y/n): ")
+            if ans and ans.lower() != "y":
+                print("已中止。")
+                sys.exit(1)
+        run_step("rename_photos.py", "Step 2a — 照片重命名", rename_extra)
+        print()
+        run_step("rename_videos.py", "Step 2b — CLIP 视频重命名", rename_extra)
     else:
-        print("⏩  跳过照片重命名")
-
-    # Step 2b — 视频重命名
-    if not skip_rename:
-        run_step("rename_videos.py", "Step 2b — CLIP 视频重命名", extra)
-    else:
-        print("⏩  跳过视频重命名")
+        print("⏩  跳过重命名步骤")
 
     print(f"\n{'='*50}")
     print(f"  🎉  全部完成！")

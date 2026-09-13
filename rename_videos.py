@@ -4,7 +4,8 @@ Step 2b — 按 creation_time 重命名 CLIP 视频。
 
 扫描 TARGET_DIR/CLIP/ 下的 Cxxxx.MP4，读取 MP4 元数据中的
 creation_time（UTC），转换为北京时间后重命名。
-配套的 CxxxxM01.XML 文件同步改名。
+配套的 CxxxxM01.XML 文件同步改名（复制阶段已不再复制 XML，
+此分支仅兼容历史残留的 XML）。
 
 用法:
   python rename_videos.py --dry     # 预览
@@ -97,7 +98,7 @@ def rename_file(src: Path, dry: bool) -> str | None:
 
 def main():
     dry_run = "--dry" in sys.argv
-    go_mode = "--go" in sys.argv
+    go_mode = "--go" in sys.argv or "--yes" in sys.argv
 
     if not dry_run and not go_mode:
         print("用法:")

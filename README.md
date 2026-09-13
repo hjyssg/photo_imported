@@ -28,16 +28,21 @@ ffprobe -version   # 验证安装
 
 ## 使用前 — 修改 config.py
 
-打开 `config.py`，根据实际情况修改路径：
+源路径不再写死盘符，改为「按文件夹自动定位」。打开 `config.py` 按需调整：
 
 ```python
-PHOTO_SOURCE = Path("G:/DCIM")              # 索尼照片目录（会扫描所有子目录）
-CLIP_SOURCE  = Path("G:/PRIVATE/M4ROOT/CLIP")  # DJI CLIP 视频
-DJI_SOURCE   = Path("H:/DCIM/DJI_001")      # DJI 无人机视频（可选）
-TEMP_ROOT    = Path("E:/_Photo2/temp")      # 目标根目录
+LOOKUP_DRIVES = ["G", "H"]          # 只在这几个盘中查找（盘符不固定时改这里）
+
+# 各源的特征目录（仅检查第一层，不深扫）
+PHOTO_LOOKUP = "DCIM"                           # 照片：DCIM 下第一层子目录含 DSC*.JPG
+DJI_LOOKUP   = "DJI"                            # DJI 无人机：DCIM/DJI_xxxx
+CLIP_LOOKUP  = ("PRIVATE", "M4ROOT", "CLIP")    # CLIP：PRIVATE/M4ROOT/CLIP
+
+TEMP_ROOT    = Path("E:/_Photo2/temp")          # 目标根目录
 ```
 
-> 如果某个源不存在（如 H 盘没插），脚本会自动跳过，不会报错。
+> 工具会自动在 `LOOKUP_DRIVES` 的盘里按特征文件夹定位三个源；
+> 某盘未插入、或找不到对应文件夹，就自动跳过该源，不影响其他源。
 
 ## 使用方法
 
@@ -81,9 +86,17 @@ python rename_videos.py --go               # 视频重命名执行
 ### Step 1 — 复制文件
 
 从 SD 卡复制到 `E:\_Photo2\temp\<mmdd>\`：
-- `G:\DCIM\` 下所有子目录的 `DSC*.JPG`
-- `G:\PRIVATE\M4ROOT\CLIP\` 的 MP4+XML
-- `H:\DCIM\DJI_001\` 的 MP4（如果有）
+- `DCIM\` 下第一层子目录的 `DSC*.JPG`（照片）
+- `PRIVATE\M4ROOT\CLIP\` 的 MP4（CLIP，XML 不复制）
+- `DCIM\DJI_xxxx\` 的 MP4（DJI 无人机，若有）
+
+目标结构：
+```
+E:\_Photo2\temp\<mmdd>\
+├── <照片 DSC*.JPG>
+├── CLIP\        ← CLIP 视频
+└── DJI\         ← DJI 无人机视频（独立文件夹）
+```
 
 ### Step 2 — 按时间重命名
 
@@ -100,5 +113,5 @@ C1572.MP4     →  2026-09-09_09-53-43.mp4  （配套 XML 同步改名）
 
 - **先 `--dry` 预览再 `--go` 执行** — 永远不要跳过预览
 - 脚本幂等 — 已正确命名的文件自动跳过，可重复运行
-- 如果 SD 卡盘符变了，改 `config.py` 中的源路径即可
+- 源按文件夹自动定位，只在 `LOOKUP_DRIVES` 盘中查找；盘未插入/找不到文件夹就跳过
 - 照片依赖 EXIF 数据，不含 EXIF 的图片/截图不支持

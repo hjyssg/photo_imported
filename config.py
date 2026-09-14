@@ -80,7 +80,7 @@ CLIP_SOURCE = find_source("clip")     # DJI CLIP 视频（PRIVATE/M4ROOT/CLIP）
 # ── 目标路径 ──────────────────────────────────────────────
 # 照片 → TARGET_DIR；CLIP 视频 → CLIP_DIR；DJI 单独 → DJI_DIR
 # 子文件夹名自动使用当天日期 mmdd
-TEMP_ROOT = Path("E:/_Photo2/temp")
+TEMP_ROOT = Path("E:/_Photo/temp")
 
 # ── 派生路径（自动计算） ───────────────────────────────────
 TODAY_MMDD = datetime.now().strftime("%m%d")

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>照片去重工具</title>
+<link rel="stylesheet" href="/static/style.css?v=2">
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>照片去重工具 <span id="srvStatus" class="srv-status">连接中…</span></h1>
+    <div class="input-bar">
+      <input id="rootInput" type="text" placeholder="输入要检查的文件夹绝对路径，如 E:/_Photo/_年份/2017" spellcheck="false" autocomplete="off">
+      <button id="btnScan" class="primary" onclick="startScan()">开始检查</button>
+      <button id="btnCancel" class="ghost" onclick="cancelScan()" style="display:none">取消</button>
+      <button id="btnRestart" class="ghost" onclick="restartBackend()" style="display:none">重启后端</button>
+    </div>
+    <div id="reqStatus" class="req-status"></div>
+    <div id="errBanner" class="err-banner" style="display:none"></div>
+  </header>
+
+  <div id="progressWrap" class="progress" style="display:none">
+    <div class="prog-line"><span class="prog-label">阶段</span><span id="progPhase" class="prog-phase">准备中…</span></div>
+    <div class="prog-bar"><div id="progFill" style="width:0%"></div></div>
+    <div class="prog-num"><span id="progCount">0</span> 文件</div>
+  </div>
+
+  <div id="statsBar" class="stats" style="display:none">
+    <div class="st"><span class="st-k">重复组</span><b id="stGroups">0</b></div>
+    <div class="st"><span class="st-k">文件</span><b id="stFiles">0</b></div>
+    <div class="st"><span class="st-k">待移动</span><b id="stToMove">0</b></div>
+    <div class="st"><span class="st-k">可释放</span><b id="stFreed">0 B</b></div>
+    <button id="btnMove" class="warn" onclick="startMove()">移动到 temp（释出清单）</button>
+  </div>
+
+  <div id="toolbar" class="toolbar" style="display:none">
+    <input id="filterInput" type="text" placeholder="按文件名过滤分组…" oninput="applyFilter()" autocomplete="off">
+    <span id="pager" class="pager"></span>
+  </div>
+
+  <div id="previewWrap" class="preview" style="display:none">
+    <h3>移动预览 <span id="previewMode" class="pv-mode"></span>
+      <span class="pv-dest" id="previewDest"></span></h3>
+    <div id="previewList" class="preview-list"></div>
+    <p class="preview-note">黄色 = 目标已存在，将跳过（不覆盖）。确认前不会改动任何文件。</p>
+    <button id="btnConfirm" class="danger" onclick="confirmMove()">确认移动</button>
+    <button class="ghost" onclick="closePreview()">关闭预览</button>
+  </div>
+
+  <div id="resultList" class="results"></div>
+  <div id="emptyHint" class="empty-hint" style="display:none"></div>
+
+  <div id="toast" class="toast"></div>
+</div>
+<script src="/static/app.js?v=3"></script>
+</body>
+</html>

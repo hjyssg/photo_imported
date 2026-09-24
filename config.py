@@ -87,3 +87,12 @@ TODAY_MMDD = datetime.now().strftime("%m%d")
 TARGET_DIR = TEMP_ROOT / TODAY_MMDD
 CLIP_DIR = TARGET_DIR / "CLIP"
 DJI_DIR = TARGET_DIR / "DJI"
+
+# ── 导入去重（部分 MD5 + SQLite） ──────────────────────────
+# 记录已导入文件的部分 MD5，命中则跳过复制，避免同一内容重复导入。
+# 数据库固定放在脚本目录，跨批次/跨日期都生效。
+IMPORT_DB_PATH = Path(__file__).resolve().parent / "imports.db"
+
+# True：命中已导入指纹的文件直接跳过（不复制）
+# False：仍会登记指纹，但不跳过（相当于只做记录）
+SKIP_DUPLICATE_IMPORT = True

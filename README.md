@@ -8,10 +8,12 @@
 photo_saver/
 ├── config.py           ← 改这里！配置源路径/目标路径
 ├── copy_files.py       Step 1: 从 SD 卡复制文件到 temp 目录
+├── import_db.py        导入去重库（部分 MD5 + SQLite），copy_files 自动调用
 ├── rename_photos.py    Step 2a: 按 EXIF 时间重命名照片
 ├── rename_videos.py    Step 2b: 按 creation_time 重命名 CLIP 视频
 ├── run_all.py          一键执行全部流程
 ├── run_all.bat         双击运行（选择菜单）
+├── imports.db          自动生成：已导入文件指纹库（已 gitignore）
 └── README.md
 ```
 
@@ -54,6 +56,7 @@ TEMP_ROOT    = Path("E:/_Photo2/temp")          # 目标根目录
 [3] 仅预览（不修改任何文件）
 [4] 仅复制文件
 [5] 仅重命名照片+视频
+[6] 查看导入去重库
 ```
 
 ### 命令行
@@ -75,10 +78,22 @@ python run_all.py --skip-rename
 
 ```bash
 python copy_files.py                        # 复制
+python copy_files.py --no-db                # 复制，但关闭去重库
+python copy_files.py --allow-dup            # 复制，重复文件只登记不跳过
+python copy_files.py --db-stats             # 只看去重库状态，不复制
 python rename_photos.py --dry              # 照片重命名预览
 python rename_photos.py --go               # 照片重命名执行
 python rename_videos.py --dry              # 视频重命名预览
 python rename_videos.py --go               # 视频重命名执行
+```
+
+### 导入去重库维护
+
+```bash
+python import_db.py --path                  # 打印数据库路径（imports.db）
+python import_db.py --stats                 # 已登记文件数 / 总大小
+python import_db.py --list --limit 20       # 最近 20 条导入记录
+python import_db.py --forget DSC05673.JPG   # 删除某文件记录（之后可重新导入）
 ```
 
 ## 流程说明
@@ -98,6 +113,22 @@ E:\_Photo2\temp\<mmdd>\
 └── DJI\         ← DJI 无人机视频（独立文件夹）
 ```
 
+#### 导入去重（部分 MD5）
+
+复制前先算源文件的**部分 MD5**，和 `imports.db` 里的记录比对，命中就跳过不复制：
+
+```
+指纹 = md5( 文件大小 + 文件头 1MB + 文件尾 1MB )
+```
+
+- 只读头尾各 1MB，比整文件 MD5 快得多；小文件等价于整文件 MD5。
+- 首次导入成功后登记指纹（文件名、源路径、目标目录、导入时间）。
+- 换卡 / 文件被改名后再次插入，只要内容相同就会提示 `⏭ 跳过重复 xxx`，不重复占用空间。
+- 同一次导入里出现两份完全相同的文件，第二份也会被跳过。
+- 记录里存的是「目标目录」而非文件名，Step 2 重命名后仍然有效。
+- 不想要这个行为：`config.py` 里 `SKIP_DUPLICATE_IMPORT = False`（只登记不跳过），
+  或命令行 `--allow-dup`；完全关闭用 `--no-db`。
+
 ### Step 2 — 按时间重命名
 
 所有文件按拍摄时间统一命名，按时间轴自然排序：
@@ -113,5 +144,6 @@ C1572.MP4     →  2026-09-09_09-53-43.mp4  （配套 XML 同步改名）
 
 - **先 `--dry` 预览再 `--go` 执行** — 永远不要跳过预览
 - 脚本幂等 — 已正确命名的文件自动跳过，可重复运行
+- 导入去重库 `imports.db` 与目标目录无关，跨日期/跨批次生效；误判可用 `python import_db.py --forget <文件名>` 删除记录后重跑
 - 源按文件夹自动定位，只在 `LOOKUP_DRIVES` 盘中查找；盘未插入/找不到文件夹就跳过
 - 照片依赖 EXIF 数据，不含 EXIF 的图片/截图不支持

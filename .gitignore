@@ -12,3 +12,9 @@ Thumbs.db
 .vscode/
 .idea/
 _run.log
+
+# 导入去重指纹库（SQLite，本地生成）
+imports.db
+imports.db-wal
+imports.db-shm
+

@@ -16,15 +16,17 @@ echo [2] 完整流程（自动全部确认）
 echo [3] 仅预览（不修改任何文件）
 echo [4] 仅复制文件
 echo [5] 仅重命名照片+视频
+echo [6] 查看导入去重库
 echo.
 
-set /p CHOICE="输入数字 (1-5): "
+set /p CHOICE="输入数字 (1-6): "
 
 if "%CHOICE%"=="1" python run_all.py
 if "%CHOICE%"=="2" python run_all.py --yes
 if "%CHOICE%"=="3" python run_all.py --dry
 if "%CHOICE%"=="4" python run_all.py --skip-rename
 if "%CHOICE%"=="5" python run_all.py --skip-copy
+if "%CHOICE%"=="6" python import_db.py --stats
 
 if errorlevel 1 (
     echo.

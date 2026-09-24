@@ -102,8 +102,9 @@ def import_file(src: Path, dst: Path, dry: bool, db: ImportDB | None,
     if fp is not None and not allow_dup:
         rec = db.find(fp)
         if rec is not None:
+            note = "" if Path(rec["dst_dir"]).is_dir() else "，⚠ 但该目标目录已不存在"
             print(f"    ⏭  跳过重复 {src.name}（已导入于 {rec['imported_at']}，"
-                  f"原文件 {rec['name']} → {rec['dst_dir']}）")
+                  f"原文件 {rec['name']} → {rec['dst_dir']}{note}）")
             return "dup"
 
     if not copy_one(src, dst, dry):

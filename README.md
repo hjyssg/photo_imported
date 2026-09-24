@@ -16,6 +16,7 @@ photo_saver/
 ├── compress-dji-videos.sh  独立的 DJI 视频批量压缩脚本（1080p / H.265）
 ├── photo-dedup-web/    独立的「照片去重」Web 应用（Flask + React，见其 README）
 ├── imports.db          自动生成：已导入文件指纹库（已 gitignore）
+├── LICENSE             MIT
 └── README.md
 ```
 

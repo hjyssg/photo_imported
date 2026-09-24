@@ -130,7 +130,7 @@ def main():
     mp4_files = sorted(f for f in folder.iterdir() if PATTERN_MP4.match(f.name))
     if not mp4_files:
         print(f"📁  {folder}")
-        print("未找到 Cxxxx.MP4 文件。")
+        print("未找到 Cxxxx.MP4 文件（若本批已重命名过，属正常情况）。")
         sys.exit(0)
 
     print(f"📁  {folder}")

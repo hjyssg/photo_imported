@@ -21,6 +21,9 @@ photo_saver/
 
 ## 前置条件
 
+- **Python 3.10+**（代码用到 `X | None` 类型语法；开发环境为 3.14）
+- **FFmpeg**（读取视频元数据 / 压缩视频），需保证 `ffprobe`、`ffmpeg` 在 PATH 中
+
 ```bash
 # Python 包（照片 EXIF 读取）
 pip install Pillow

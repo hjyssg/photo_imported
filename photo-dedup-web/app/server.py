@@ -4,6 +4,7 @@
 """
 import os
 import threading
+import time
 import uuid
 from pathlib import Path
 
@@ -23,6 +24,7 @@ class Task:
     def __init__(self, task_id, root):
         self.task_id = task_id
         self.root = str(root)
+        self.started_at = time.time()
         self.state = "running"  # running|cancelling|cancelled|done|error
         self.phase = "counting"
         self.scanned = 0
@@ -122,10 +124,12 @@ def create_app():
     # ---------- 查询进度 / 取结果 ----------
     @app.get("/api/scan/status")
     def scan_status():
+        task_id = (request.args.get("task_id") or "").strip()
         with _lock:
             task = _TASK
-        if task is None:
-            return jsonify(state="idle", scanned=0, phase="")
+        # 无任务，或请求了具体 task_id 但对不上（后端可能已重启）→ 明确返回 idle
+        if task is None or (task_id and task.task_id != task_id):
+            return jsonify(state="idle", scanned=0, phase="", elapsed=0)
         resp = {
             "task_id": task.task_id,
             "root": task.root,
@@ -133,6 +137,7 @@ def create_app():
             "phase": task.phase,
             "scanned": task.scanned,
             "total": task.total,
+            "elapsed": time.time() - task.started_at,
         }
         if task.state == "done":
             resp["groups"] = task.groups or []

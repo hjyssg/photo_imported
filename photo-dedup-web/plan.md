@@ -31,12 +31,13 @@
 | 运行时 | **Python 3.8+** | 与原项目一致；指纹检测有现成库 |
 | Web 框架 | **Flask**（轻量，内置 dev server） | 自包含、无需额外前端框架 |
 | 图片指纹 | **Pillow**（PIL） | `Image.convert('L').thumbnail((128,128))` 做内容指纹 |
-| 前端 | **原生 HTML + CSS + 原生 JS**（无构建步骤） | 单页、无需 node/npm，双击即用 |
+| 前端 | **React + Vite**（构建产物进 `static/`） | 组件化、状态机清晰，避免原生 JS 的“作用域被吞”类 bug；`npm run build` 后可继续 `python run.py` 单文件服务 |
 | 数据格式 | JSON | 前后端沟通简单 |
 | 并发 | 单进程，扫描用线程执行上报进度 | 避免阻塞请求、UI 能刷进度 |
 
 > 决策说明：
-> - 不引入 React/Vue，保持"零构建、一个 Flask 静态目录"即可跑。
+> - 前端采用 React+Vite，用 `useScan` Hook 做 800ms 轮询状态机（idle/submitting/running/done/error/cancelled/offline），逐阶段显示进度百分比、计数与耗时。
+> - 构建产物输出到 `static/`（`emptyOutDir`），因此 `python run.py` 的服务方式不变；开发时 `npm run dev`（Vite:5173）把 `/api` 代理到 Flask:8000。
 > - 不用 SQLite，重复分组只存在于一次扫描的内存结果里；缓存只存"文件路径 → 内容指纹"以便加速。
 > - 移动用 `shutil.move`，与旧 `apply_move.py` 相同策略（目标存在则跳过，源不存在则报错）。
 
@@ -50,17 +51,21 @@ photo-dedup-web/
 ├── README.md              # 安装/运行说明
 ├── requirements.txt       # flask、pillow
 ├── run.py                 # 入口：启动 Flask 并打开浏览器
+├── package.json           # 前端依赖 / scripts（dev / build）
+├── vite.config.js         # Vite：build→static/，dev 代理 /api→Flask:8000
+├── index.html             # Vite 入口
+├── src/                   # React 前端源码
+│   ├── main.jsx / App.jsx / app.css
+│   ├── api.js             # 后端接口封装
+│   ├── useScan.js         # 扫描轮询 Hook（状态机 + 进度 + 计时）
+│   └── components/        # ScanBar / StatusBar / ProgressPanel / Results / GroupCard / Toast
 ├── app/
 │   ├── __init__.py
 │   ├── server.py          # Flask 路由 / API（含静态文件代理）
 │   ├── scanner.py         # 扫描 + 图片内容指纹 + 分组返回重复列表
 │   ├── mover.py           # 按 move 清单做 dry/move，记录日志
 │   └── cache.py           # 哈希/指纹缓存读写（json）
-├── static/
-│   ├── index.html         # 主页面（输入路径 + 结果区）
-│   ├── app.js             # 全交互逻辑
-│   └── style.css
-└── run_tests.md           # （可选）手工验收清单
+└── static/                # 前端构建产物（Flask 服务；由 npm run build 生成，勿手改）
 ```
 
 > 约定：本项目**自包含**，不复用 `d:\Git\photo_saver` 顶层任何 `.py`。若需参考算法，可对照阅读旧 `dup_common.py / find_dups.py`，但代码全部重写为新结构。

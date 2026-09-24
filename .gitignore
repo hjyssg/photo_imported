@@ -8,6 +8,9 @@ __pycache__/
 Thumbs.db
 .DS_Store
 
+# 运行产物 / 临时目录
+.dup_tmp/
+
 # 编辑器
 .vscode/
 .idea/

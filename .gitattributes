@@ -1,0 +1,5 @@
+# 统一换行符：仓库内统一 LF，检出到工作区时由各系统自行处理
+* text=auto
+
+# Shell 脚本必须 LF，否则 Git-Bash/WSL 下无法执行
+*.sh text eol=lf

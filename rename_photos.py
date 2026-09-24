@@ -19,8 +19,8 @@ from PIL.ExifTags import TAGS
 
 try:
     from config import TARGET_DIR
-except ImportError:
-    TARGET_DIR = Path("E:/_Photo2/temp/0910")
+except ImportError as e:
+    raise SystemExit("✗ 找不到 config.py，请在项目根目录下运行本脚本。") from e
 
 PATTERN = re.compile(r"^DSC\d+\.(JPG|jpg|jpeg)$", re.IGNORECASE)
 DATE_FORMAT = "%Y-%m-%d_%H-%M-%S"

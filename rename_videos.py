@@ -21,8 +21,8 @@ from pathlib import Path
 
 try:
     from config import CLIP_DIR
-except ImportError:
-    CLIP_DIR = Path("E:/_Photo2/temp/0910/CLIP")
+except ImportError as e:
+    raise SystemExit("✗ 找不到 config.py，请在项目根目录下运行本脚本。") from e
 
 PATTERN_MP4 = re.compile(r"^C(\d+)\.MP4$", re.IGNORECASE)
 DATE_FORMAT = "%Y-%m-%d_%H-%M-%S"

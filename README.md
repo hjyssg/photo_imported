@@ -13,6 +13,8 @@ photo_saver/
 ├── rename_videos.py    Step 2b: 按 creation_time 重命名 CLIP 视频
 ├── run_all.py          一键执行全部流程
 ├── run_all.bat         双击运行（选择菜单）
+├── compress-dji-videos.sh  独立的 DJI 视频批量压缩脚本（1080p / H.265）
+├── photo-dedup-web/    独立的「照片去重」Web 应用（Flask + React，见其 README）
 ├── imports.db          自动生成：已导入文件指纹库（已 gitignore）
 └── README.md
 ```
@@ -40,7 +42,7 @@ PHOTO_LOOKUP = "DCIM"                           # 照片：DCIM 下第一层子�
 DJI_LOOKUP   = "DJI"                            # DJI 无人机：DCIM/DJI_xxxx
 CLIP_LOOKUP  = ("PRIVATE", "M4ROOT", "CLIP")    # CLIP：PRIVATE/M4ROOT/CLIP
 
-TEMP_ROOT    = Path("E:/_Photo2/temp")          # 目标根目录
+TEMP_ROOT    = Path("E:/_Photo/temp")           # 目标根目录
 ```
 
 > 工具会自动在 `LOOKUP_DRIVES` 的盘里按特征文件夹定位三个源；
@@ -100,14 +102,14 @@ python import_db.py --forget DSC05673.JPG   # 删除某文件记录（之后可�
 
 ### Step 1 — 复制文件
 
-从 SD 卡复制到 `E:\_Photo2\temp\<mmdd>\`：
+从 SD 卡复制到 `E:\_Photo\temp\<mmdd>\`：
 - `DCIM\` 下第一层子目录的 `DSC*.JPG`（照片）
 - `PRIVATE\M4ROOT\CLIP\` 的 MP4（CLIP，XML 不复制）
 - `DCIM\DJI_xxxx\` 的 MP4（DJI 无人机，若有）
 
 目标结构：
 ```
-E:\_Photo2\temp\<mmdd>\
+E:\_Photo\temp\<mmdd>\
 ├── <照片 DSC*.JPG>
 ├── CLIP\        ← CLIP 视频
 └── DJI\         ← DJI 无人机视频（独立文件夹）
@@ -147,3 +149,15 @@ C1572.MP4     →  2026-09-09_09-53-43.mp4  （配套 XML 同步改名）
 - 导入去重库 `imports.db` 与目标目录无关，跨日期/跨批次生效；误判可用 `python import_db.py --forget <文件名>` 删除记录后重跑
 - 源按文件夹自动定位，只在 `LOOKUP_DRIVES` 盘中查找；盘未插入/找不到文件夹就跳过
 - 照片依赖 EXIF 数据，不含 EXIF 的图片/截图不支持
+- 本工具只**复制**和**重命名**，从不删除文件
+
+## 相关子项目
+
+- **`photo-dedup-web/`** — 独立的「照片去重」Web 应用（Flask + React + Vite）。
+  输入一个文件夹路径，服务端按像素指纹 / MD5 找出重复文件，网页上勾选保留哪一份，
+  其余移动到 `.photo_dup_removed/`（不删除）。详见 [`photo-dedup-web/README.md`](photo-dedup-web/README.md)。
+- **`compress-dji-videos.sh`** — DJI 视频批量压缩为 1080p30 / H.265 ~6Mbps / AAC 128k。
+
+## 许可证
+
+[MIT](LICENSE)

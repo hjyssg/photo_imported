@@ -8,7 +8,7 @@ export default function ScanBar({ root, onRoot, onStart, onCancel, busy, canCanc
         value={root}
         onChange={(e) => onRoot(e.target.value)}
         onKeyDown={(e) => e.key === 'Enter' && busy && onStart()}
-        placeholder="输入要检查的文件夹绝对路径，如 E:/_Photo/_年份/2017"
+        placeholder="输入要检查的文件夹绝对路径，如 D:/photos/2017"
         spellCheck={false}
         autoComplete="off"
         disabled={busy}

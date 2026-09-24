@@ -1,9 +1,9 @@
 # 照片去重 Web 项目 · 设计文档（plan.md）
 
-> 目标：把原 `d:\Git\photo_saver` 那套"脚本 + 静态 HTML"去重流程，重做成一个**完整自包含的 Web 应用**：
+> 目标：把原先那套"脚本 + 静态 HTML"去重流程，重做成一个**完整自包含的 Web 应用**：
 > 用户打开网页 → 输入文件夹路径 → 点「开始检查」→ 服务端做内容级重复检测 → 结果**逐行**显示，可勾选每份的去留 → 一键把多余份移动到一个 temp 目录（不删除任何文件）。
 >
-> 本文件是设计稿 / 实现规格。请在新环境里**从零实现本文件描述的项目**，不要依赖 `d:\Git\photo_saver` 里的旧脚本。
+> 本文件是设计稿 / 实现规格。请在新环境里**从零实现本文件描述的项目**，不要依赖仓库里其他目录的旧脚本。
 
 ---
 
@@ -68,7 +68,7 @@ photo-dedup-web/
 └── static/                # 前端构建产物（Flask 服务；由 npm run build 生成，勿手改）
 ```
 
-> 约定：本项目**自包含**，不复用 `d:\Git\photo_saver` 顶层任何 `.py`。若需参考算法，可对照阅读旧 `dup_common.py / find_dups.py`，但代码全部重写为新结构。
+> 约定：本项目**自包含**，不复用仓库其他目录的任何 `.py`。若需参考算法，可对照阅读旧版 `dup_common.py / find_dups.py`（已不在本仓库），但代码全部重写为新结构。
 
 ---
 
@@ -114,13 +114,13 @@ photo-dedup-web/
 - 静态资源 `GET /static/<path>` → Flask 自带 static 目录。
 - 提供一个**本地文件代理**端点（关键！）：
   - `GET /api/file?p=<绝对路径>` → 用 `send_file` 返回该本地图片/视频。
-  - **原因**：在 `http://127.0.0.1` 页面里直接 `<img src="file:///E:/...">` 会被浏览器跨源拦截，必须走后端代理。
+  - **原因**：在 `http://127.0.0.1` 页面里直接 `<img src="file:///D:/...">` 会被浏览器跨源拦截，必须走后端代理。
   - 安全性：仅允许 `p` 为"用户本次输入目录"或其子目录内的文件（后端记录允许根），防任意文件读取。
 
 ### 5.1 提交扫描任务
 ```
 POST /api/scan/start
-body: { "root": "E:/_Photo/_年份/2017" }
+body: { "root": "D:/photos/2017" }
 resp: { "task_id": "abc123" }
 ```
 - 校验 `root` 存在且是目录；`root` 存入内存中的任务表（单机只保留最近 1 个任务）。
@@ -131,9 +131,9 @@ resp: { "task_id": "abc123" }
 GET /api/scan/status?task_id=abc123
 resp: { "state":"done", "scanned":5928, "phase":"图片指纹|MD5|完成",
         "groups": [ { "id":1, "mode":"内容重复(像素一致)", "folder":"",
-                      "keep_abs":"E:/.../keep.jpg",
-                      "items":[ {"abs":"E:/.../a.jpg","rel":"a.jpg","size":123456,"exif_len":5120,"kind":"img"},
-                                {"abs":"E:/.../b.jpg","rel":"b.jpg","size":123000,"exif_len":2048,"kind":"img"} ] } ],
+                      "keep_abs":"D:/photos/.../keep.jpg",
+                      "items":[ {"abs":"D:/photos/.../a.jpg","rel":"a.jpg","size":123456,"exif_len":5120,"kind":"img"},
+                                {"abs":"D:/photos/.../b.jpg","rel":"b.jpg","size":123000,"exif_len":2048,"kind":"img"} ] } ],
         "stats":{ "groups":484, "files":968, "to_move":484, "freed_bytes":1234567890 } }
 ```
 - `groups` 仅在 `state==done` 时返回；`stats` 由服务端按"每组保留 1 份"预算。
@@ -153,7 +153,7 @@ scan(root):
 ### 5.4 移动多余份
 ```
 POST /api/move
-body: { "root":"...", "keep_abs":["E:/.../keep.jpg", ...],   # 每组保留的绝对路径(每个组且仅给1个)
+body: { "root":"...", "keep_abs":["D:/photos/.../keep.jpg", ...],   # 每组保留的绝对路径(每个组且仅给1个)
         "dry": true|false }
 resp: { "ok":N, "skip":M, "failed":0, "dest":".../.photo_dup_removed",
         "preview":[ {"from":"...","to":"...","reason":"dest_exist|moved"|...} ] }
@@ -186,9 +186,9 @@ resp: { "ok":N, "skip":M, "failed":0, "dest":".../.photo_dup_removed",
 │  [移动到 temp(释出清单)]                    │
 │  ──────────────────────────────────────── │
 │  组 #12  ▸ 内容重复(像素一致) · 3 份 · 1.2MB │
-│   ├─ [缩略] keep.jpg          E:\...  (1.0MB)  (保留⊙)  (移动○)
-│   ├─ [缩略] keep_1.jpg        E:\...  (1.0MB)  (保留○)  (移动⊙)
-│   └─ [缩略] IMG_0001.JPG      E:\...  (1.1MB)  (保留○)  (移动⊙)
+│   ├─ [缩略] keep.jpg          D:\...  (1.0MB)  (保留⊙)  (移动○)
+│   ├─ [缩略] keep_1.jpg        D:\...  (1.0MB)  (保留○)  (移动⊙)
+│   └─ [缩略] IMG_0001.JPG      D:\...  (1.1MB)  (保留○)  (移动⊙)
 │  组 #13  ▸ 字节级相同(MD5) · 2 份 · ...        '本组跳过' 按钮
 │   ├─ ...
 └────────────────────────────────────────────┘

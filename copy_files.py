@@ -8,7 +8,7 @@ Step 1 — 从 SD 卡/相机复制文件到目标文件夹。--dry 预览，不�
   - CLIP     ：PRIVATE/M4ROOT/CLIP 下的 MP4（DJI CLIP；配套 XML 不再复制）
 
 目标：
-  E:/_Photo2/temp/<mmdd>/
+  E:/_Photo/temp/<mmdd>/
   ├── CLIP/        ← CLIP 视频
   └── DJI/         ← DJI 无人机视频（独立文件夹）
 

@@ -4,7 +4,7 @@
 #  将视频压缩为 1080p@30fps | H.265 ~6Mbps | AAC 128k
 #
 #  用法:  ./compress-dji-videos.sh <文件夹路径>
-#  例:    ./compress-dji-videos.sh "/e/_Photo2/2026/0830 黄金之城/舞台"
+#  例:    ./compress-dji-videos.sh "/e/_Photo/2026/0830/舞台"
 # ============================================================
 
 INPUT_DIR="$1"
@@ -13,7 +13,7 @@ OUTPUT_DIR="$INPUT_DIR/compressed"
 # --- 参数检查 ---
 if [ -z "$INPUT_DIR" ]; then
     echo "用法: $0 <文件夹路径>"
-    echo "例:   $0 \"/e/_Photo2/2026/0830 黄金之城/舞台\""
+    echo "例:   $0 \"/e/_Photo/2026/0830/舞台\""
     exit 1
 fi
 

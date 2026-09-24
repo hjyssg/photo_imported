@@ -6,8 +6,9 @@ Step 2a — 按 EXIF 拍摄时间重命名照片。
 重命名为 YYYY-MM-DD_HH-MM-SS[_NN].jpg 格式。
 
 用法:
-  python rename_photos.py --dry     # 预览
-  python rename_photos.py --go      # 执行
+  python rename_photos.py --dry                 # 预览（默认目录来自 config.TARGET_DIR）
+  python rename_photos.py --go                  # 执行
+  python rename_photos.py --dir <文件夹> --go    # 对指定文件夹操作（如已归档的批次）
 """
 
 import re
@@ -24,6 +25,15 @@ except ImportError as e:
 
 PATTERN = re.compile(r"^DSC\d+\.(JPG|jpg|jpeg)$", re.IGNORECASE)
 DATE_FORMAT = "%Y-%m-%d_%H-%M-%S"
+
+
+def arg_value(args: list[str], name: str) -> str | None:
+    """取 `--name value` 形式参数的值，缺值返回 None。"""
+    if name in args:
+        i = args.index(name)
+        if i + 1 < len(args):
+            return args[i + 1]
+    return None
 
 
 def get_exif_datetime(filepath: Path) -> str | None:
@@ -88,9 +98,11 @@ def main():
         print("用法:")
         print("  python rename_photos.py --dry      # 预览")
         print("  python rename_photos.py --go       # 执行")
+        print("  python rename_photos.py --dir <文件夹> --go   # 对指定文件夹操作")
         sys.exit(1)
 
-    folder = TARGET_DIR
+    override = arg_value(sys.argv[1:], "--dir")
+    folder = Path(override) if override else TARGET_DIR
     if not folder.is_dir():
         print(f"❌  目录不存在: {folder}")
         sys.exit(1)

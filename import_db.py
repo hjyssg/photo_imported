@@ -12,6 +12,7 @@ import_db.py — 导入去重库（SQLite）：记录已导入文件的「部分
   python import_db.py --stats                # 查看已登记数量、总大小
   python import_db.py --list --limit 20      # 列出最近导入的记录
   python import_db.py --forget DSC05673.JPG  # 按文件名/指纹删除记录
+  python import_db.py --relocate <旧目录> <新目录>   # 批次归档后修正记录里的目标目录
   python import_db.py --path                 # 打印数据库路径
 """
 from __future__ import annotations
@@ -145,6 +146,27 @@ class ImportDB:
         conn.commit()
         return cur.rowcount
 
+    def relocate(self, old_dir, new_dir) -> int:
+        """批次归档后修正记录：把 dst_dir 位于 old_dir 下的记录改写到 new_dir。
+
+        子目录会被保留（如 old/CLIP → new/CLIP）。返回更新条数。
+        """
+        old = str(Path(old_dir))
+        new = str(Path(new_dir))
+        conn = self.connect()
+        rows = conn.execute("SELECT partial_md5, dst_dir FROM imported_files").fetchall()
+        n = 0
+        for r in rows:
+            d = r["dst_dir"]
+            if d == old or d.startswith(old + "\\") or d.startswith(old + "/"):
+                conn.execute(
+                    "UPDATE imported_files SET dst_dir = ? WHERE partial_md5 = ?",
+                    (new + d[len(old):], r["partial_md5"]),
+                )
+                n += 1
+        conn.commit()
+        return n
+
 
 def fmt_size(n: int) -> str:
     v = float(n)
@@ -198,6 +220,17 @@ def main():
         for k in keys:
             n = db.forget(k)
             print(f"{'✓' if n else '·'}  {k}: 删除 {n} 条")
+        db.close()
+        return
+
+    if "--relocate" in args:
+        i = args.index("--relocate")
+        paths = [a for a in args[i + 1:] if not a.startswith("--")]
+        if len(paths) < 2:
+            print('用法: python import_db.py --relocate <旧目录> <新目录>')
+            sys.exit(1)
+        n = db.relocate(paths[0], paths[1])
+        print(f"✓  已更新 {n} 条记录: {paths[0]} → {paths[1]}")
         db.close()
         return
 

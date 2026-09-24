@@ -91,6 +91,11 @@ python rename_photos.py --dry              # 照片重命名预览
 python rename_photos.py --go               # 照片重命名执行
 python rename_videos.py --dry              # 视频重命名预览
 python rename_videos.py --go               # 视频重命名执行
+
+# 对任意目录操作（如批次已从 temp 归档到别处）
+python rename_photos.py --dir "E:/_Photo/_摄影会/2026/0924 某活动" --dry
+python rename_photos.py --dir "E:/_Photo/_摄影会/2026/0924 某活动" --go
+python rename_videos.py --dir "E:/_Photo/_摄影会/2026/0924 某活动" --go   # 自动下钻到其 CLIP/
 ```
 
 ### 导入去重库维护
@@ -100,6 +105,8 @@ python import_db.py --path                  # 打印数据库路径（imports.db
 python import_db.py --stats                 # 已登记文件数 / 总大小
 python import_db.py --list --limit 20       # 最近 20 条导入记录
 python import_db.py --forget DSC05673.JPG   # 删除某文件记录（之后可重新导入）
+python import_db.py --relocate "E:/_Photo/temp/0924" "E:/_Photo/_摄影会/2026/0924 某活动"
+                                            # 批次归档后修正记录里的目标目录
 ```
 
 ## 流程说明
@@ -151,6 +158,8 @@ C1572.MP4     →  2026-09-09_09-53-43.mp4  （配套 XML 同步改名）
 - **先 `--dry` 预览再 `--go` 执行** — 永远不要跳过预览
 - 脚本幂等 — 已正确命名的文件自动跳过，可重复运行
 - 导入去重库 `imports.db` 与目标目录无关，跨日期/跨批次生效；误判可用 `python import_db.py --forget <文件名>` 删除记录后重跑
+- 批次从 `temp/<mmdd>` 归档到别处后，建议执行一次 `import_db.py --relocate <旧目录> <新目录>`，
+  让记录里的目标目录保持准确（否则下次导入会提示"⚠ 但该目标目录已不存在"）
 - 源按文件夹自动定位，只在 `LOOKUP_DRIVES` 盘中查找；盘未插入/找不到文件夹就跳过
 - 照片依赖 EXIF 数据，不含 EXIF 的图片/截图不支持
 - 本工具只**复制**和**重命名**，从不删除文件

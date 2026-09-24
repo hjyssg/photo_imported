@@ -8,8 +8,10 @@ creation_time（UTC），转换为北京时间后重命名。
 此分支仅兼容历史残留的 XML）。
 
 用法:
-  python rename_videos.py --dry     # 预览
-  python rename_videos.py --go      # 执行
+  python rename_videos.py --dry                 # 预览（默认目录来自 config.CLIP_DIR）
+  python rename_videos.py --go                  # 执行
+  python rename_videos.py --dir <文件夹> --go    # 对指定文件夹操作（如已归档的批次）
+                                                # 该文件夹下有 CLIP/ 则自动下钻
 """
 
 import json
@@ -27,6 +29,15 @@ except ImportError as e:
 PATTERN_MP4 = re.compile(r"^C(\d+)\.MP4$", re.IGNORECASE)
 DATE_FORMAT = "%Y-%m-%d_%H-%M-%S"
 UTC8 = timezone(timedelta(hours=8))
+
+
+def arg_value(args: list[str], name: str) -> str | None:
+    """取 `--name value` 形式参数的值，缺值返回 None。"""
+    if name in args:
+        i = args.index(name)
+        if i + 1 < len(args):
+            return args[i + 1]
+    return None
 
 
 def get_creation_time_utc(filepath: Path) -> datetime | None:
@@ -104,9 +115,14 @@ def main():
         print("用法:")
         print("  python rename_videos.py --dry      # 预览")
         print("  python rename_videos.py --go       # 执行")
+        print("  python rename_videos.py --dir <文件夹> --go   # 对指定文件夹操作")
         sys.exit(1)
 
-    folder = CLIP_DIR
+    override = arg_value(sys.argv[1:], "--dir")
+    folder = Path(override) if override else CLIP_DIR
+    # --dir 给的是批次根目录时，自动下钻到 CLIP/
+    if override and (folder / "CLIP").is_dir():
+        folder = folder / "CLIP"
     if not folder.is_dir():
         print(f"❌  目录不存在: {folder}")
         sys.exit(1)

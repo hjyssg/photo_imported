@@ -16,6 +16,8 @@ photo_saver/
 ├── compress-dji-videos.sh  独立的 DJI 视频批量压缩脚本（1080p / H.265）
 ├── photo-dedup-web/    独立的「照片去重」Web 应用（Flask + React，见其 README）
 ├── imports.db          自动生成：已导入文件指纹库（已 gitignore）
+├── docs/
+│   └── database.md     数据库结构说明（imports.db 表结构/索引/维护）
 ├── LICENSE             MIT
 └── README.md
 ```
@@ -163,6 +165,11 @@ C1572.MP4     →  2026-09-09_09-53-43.mp4  （配套 XML 同步改名）
 - 源按文件夹自动定位，只在 `LOOKUP_DRIVES` 盘中查找；盘未插入/找不到文件夹就跳过
 - 照片依赖 EXIF 数据，不含 EXIF 的图片/截图不支持
 - 本工具只**复制**和**重命名**，从不删除文件
+
+## 文档
+
+- [`docs/database.md`](docs/database.md) — **数据库结构**：`imports.db` 的表结构与字段含义、内容指纹算法，
+  以及「移动 / 改名 / 删除文件后还会不会被判重」的人话说明和常用命令。
 
 ## 相关子项目
 

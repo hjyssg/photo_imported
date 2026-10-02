@@ -11,6 +11,7 @@ photo_saver/
 ├── import_db.py        导入去重库（部分 MD5 + SQLite），copy_files 自动调用
 ├── rename_photos.py    Step 2a: 按 EXIF 时间重命名照片
 ├── rename_videos.py    Step 2b: 按 creation_time 重命名 CLIP 视频
+├── analyze_lens.py     焦段 / 光圈分布分析 → 镜头选择建议（24-70 vs 25-200）
 ├── run_all.py          一键执行全部流程
 ├── run_all.bat         双击运行（选择菜单）
 ├── compress-dji-videos.sh  独立的 DJI 视频批量压缩脚本（1080p / H.265）
@@ -98,6 +99,10 @@ python rename_videos.py --go               # 视频重命名执行
 python rename_photos.py --dir "E:/_Photo/_摄影会/2026/0924 某活动" --dry
 python rename_photos.py --dir "E:/_Photo/_摄影会/2026/0924 某活动" --go
 python rename_videos.py --dir "E:/_Photo/_摄影会/2026/0924 某活动" --go   # 自动下钻到其 CLIP/
+
+# 焦段/光圈分析（新）
+python analyze_lens.py --dir "E:/_Photo/_摄影会/2026/1002 Redland"   # 分析一批照片
+python analyze_lens.py --dir .                                         # 分析当前目录
 ```
 
 ### 导入去重库维护
@@ -110,6 +115,30 @@ python import_db.py --forget DSC05673.JPG   # 删除某文件记录（之后可�
 python import_db.py --relocate "E:/_Photo/temp/0924" "E:/_Photo/_摄影会/2026/0924 某活动"
                                             # 批次归档后修正记录里的目标目录
 ```
+
+### 焦段 / 光圈分析（analyze_lens.py）
+
+对一批已归档的照片做焦段和光圈统计，帮你决定下次带哪个镜头。
+
+```bash
+# 分析任意已归档的批次
+python analyze_lens.py --dir "E:/_Photo/_摄影会/2026/1002 Redland"
+python analyze_lens.py --dir "E:/_Photo/_年份/2026/0710 BW2026"
+
+# 不指定目录则使用 config.TARGET_DIR 的上一级（temp 根）
+python analyze_lens.py
+```
+
+输出内容：
+- 相机型号、镜头型号
+- 主力相机焦段分布（区间 + 最常用焦段 Top 10）
+- **24-70mm 覆盖比例** vs **超出 70mm 比例**
+- 光圈分布（光圈段、各光圈值的使用频率）
+- 镜头选择建议（根据焦段覆盖比例自动推荐 24-70 或 25-200）
+
+典型场景：一场拍摄结束后，用 `analyze_lens.py` 分析焦段使用情况，据此决定下次类似场合带哪个镜头。
+
+该脚本只读不写，可放心使用。
 
 ## 流程说明
 

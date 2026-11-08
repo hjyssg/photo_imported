@@ -124,8 +124,12 @@ def main():
     if override and (folder / "CLIP").is_dir():
         folder = folder / "CLIP"
     if not folder.is_dir():
-        print(f"❌  目录不存在: {folder}")
-        sys.exit(1)
+        if override:
+            print(f"❌  目录不存在: {folder}")
+            sys.exit(1)
+        # 默认目录不存在 = 本次没有可处理的 CLIP 视频，属于正常情况，直接跳过。
+        print(f"⏭  目录不存在，跳过: {folder}")
+        sys.exit(0)
 
     mp4_files = sorted(f for f in folder.iterdir() if PATTERN_MP4.match(f.name))
     if not mp4_files:

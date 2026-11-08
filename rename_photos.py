@@ -104,8 +104,13 @@ def main():
     override = arg_value(sys.argv[1:], "--dir")
     folder = Path(override) if override else TARGET_DIR
     if not folder.is_dir():
-        print(f"❌  目录不存在: {folder}")
-        sys.exit(1)
+        if override:
+            print(f"❌  目录不存在: {folder}")
+            sys.exit(1)
+        # 默认目录不存在 = 本次没有可处理的照片（如只导入视频/没插卡），
+        # 属于正常情况，直接跳过，避免一键流程误报失败。
+        print(f"⏭  目录不存在，跳过: {folder}")
+        sys.exit(0)
 
     files = sorted(f for f in folder.iterdir() if PATTERN.match(f.name))
     if not files:

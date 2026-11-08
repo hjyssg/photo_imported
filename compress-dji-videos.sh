@@ -20,6 +20,7 @@ MAXRATE="8M"
 BUF_SIZE="12M"
 FPS="30"
 AUDIO_BITRATE="128k"
+PRESET="slow"
 # ===================================
 
 INPUT_DIR=""
@@ -86,7 +87,7 @@ fi
 
 # --- 统计 MP4 文件 (case-insensitive glob) ---
 shopt -s nocaseglob nullglob
-files=("$INPUT_DIR"/*.mp4)
+files=("$INPUT_DIR"/*.mp4 "$INPUT_DIR"/*.mov)
 shopt -u nocaseglob nullglob
 
 total=${#files[@]}
@@ -109,7 +110,7 @@ echo "╚═══════════════════════�
 echo ""
 echo "  📂 输入: $INPUT_DIR"
 echo "  📂 输出: $OUTPUT_DIR"
-echo "  📊 文件: $total 个 MP4"
+echo "  📊 文件: $total 个 MP4/MOV（全部压缩）"
 if $DRY_RUN; then
     echo "  👁  模式: 预览 (--dry) — 不会编码"
 fi
@@ -193,9 +194,10 @@ for file in "${files[@]}"; do
     # --- FFmpeg 编码 ---
     t1=$(date +%s)
 
+    echo "  ⚙ 编码预设: $PRESET"
     ffmpeg -y -hwaccel auto \
         -i "$file" \
-        -c:v libx265 \
+        -c:v libx265 -preset "$PRESET" \
         -b:v "$VIDEO_BITRATE" \
         -maxrate "$MAXRATE" \
         -bufsize "$BUF_SIZE" \

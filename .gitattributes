@@ -3,3 +3,6 @@
 
 # Shell 脚本必须 LF，否则 Git-Bash/WSL 下无法执行
 *.sh text eol=lf
+# Windows 批处理 / PowerShell 必须 CRLF
+*.bat text eol=crlf
+*.ps1 text eol=crlf

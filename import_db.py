@@ -130,6 +130,23 @@ class ImportDB:
         ).fetchone()
         return {"count": row["n"], "bytes": row["bytes"]}
 
+    def by_dst_dir(self, dst_dir) -> list[dict]:
+        """取出目标目录恰好等于 dst_dir 的记录（批次拆分/移动后修正用）。"""
+        rows = self.connect().execute(
+            "SELECT * FROM imported_files WHERE dst_dir = ?", (str(Path(dst_dir)),)
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def set_dst_dir(self, fingerprint: str, dst_dir) -> int:
+        """把某条记录的目标目录改成新位置（只改库里的路径文字，不动文件）。"""
+        conn = self.connect()
+        cur = conn.execute(
+            "UPDATE imported_files SET dst_dir = ? WHERE partial_md5 = ?",
+            (str(Path(dst_dir)), fingerprint),
+        )
+        conn.commit()
+        return cur.rowcount
+
     def recent(self, limit: int = 20) -> list[dict]:
         rows = self.connect().execute(
             "SELECT * FROM imported_files ORDER BY imported_at DESC, name LIMIT ?",

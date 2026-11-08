@@ -96,3 +96,10 @@ IMPORT_DB_PATH = Path(__file__).resolve().parent / "imports.db"
 # True：命中已导入指纹的文件直接跳过（不复制）
 # False：仍会登记指纹，但不跳过（相当于只做记录）
 SKIP_DUPLICATE_IMPORT = True
+
+# ── 一场 / 两场拍摄拆分（Step 3，split_sessions.py） ────────
+# 一批导入里照片+视频的时间轴中间如果出现很大空档，很可能其实是两场摄影，
+# 此时会在 cmd 里询问「是否拆成 日期1 / 日期2 两个文件夹」（至多拆两场）。
+SESSION_GAP_MINUTES = 240      # 空档 ≥ 该分钟数才提示拆分（默认 4 小时）
+SESSION_MIN_FILES = 2          # 每场至少这么多文件才提示（防止把零星文件拆出去）
+ASK_SPLIT_SESSIONS = True      # False：一键流程不再询问拆分（仍可手动运行脚本）

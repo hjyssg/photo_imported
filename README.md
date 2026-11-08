@@ -1,6 +1,6 @@
 # Photo Saver 🏞️
 
-一键导入相机照片和视频：复制 → 按拍摄时间重命名。
+一键导入相机照片和视频：复制 → 按拍摄时间重命名 →（可选）按时间空档拆成两场。
 
 ## 目录结构
 
@@ -11,9 +11,12 @@ photo_saver/
 ├── import_db.py        导入去重库（部分 MD5 + SQLite），copy_files 自动调用
 ├── rename_photos.py    Step 2a: 按 EXIF 时间重命名照片
 ├── rename_videos.py    Step 2b: 按 creation_time 重命名 CLIP 视频
+├── split_sessions.py   Step 3: 两场拍摄拆分检查（时间轴大空档 → 询问 y/n 拆成 日期1/日期2）
 ├── analyze_lens.py     焦段 / 光圈分布分析 → 镜头选择建议（24-70 vs 25-200）
 ├── run_all.py          一键执行全部流程
 ├── run_all.bat         双击运行（选择菜单）
+├── oneclick_import.bat 双击直接一键导入（自动确认，无菜单）
+├── setup_oneclick_shortcut.ps1  在桌面创建「一键导入照片」快捷方式
 ├── compress-dji-videos.sh  独立的 DJI 视频批量压缩脚本（1080p / H.265）
 ├── photo-dedup-web/    独立的「照片去重」Web 应用（Flask + React，见其 README）
 ├── imports.db          自动生成：已导入文件指纹库（已 gitignore）
@@ -57,7 +60,25 @@ TEMP_ROOT    = Path("E:/_Photo/temp")           # 目标根目录
 
 ## 使用方法
 
-### 双击 run_all.bat（推荐）
+### 桌面一键导入（最省事，推荐）
+
+第一次在仓库目录运行一次下面的命令，桌面会多出一个「一键导入照片」图标：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\setup_oneclick_shortcut.ps1
+```
+
+之后**双击桌面图标**即可：内部直接执行 `run_all.py --yes`，不再弹菜单、不用输入 `Y`，
+复制 → 重命名全部自动完成；卡没插时对应源会自动跳过。
+最后会做一次「两场拍摄」检查：如果这批照片/视频的时间轴中间有**很大空档**
+（默认 ≥ 4 小时，可能其实是两场摄影），会在窗口里问一句
+`是否拆分成两个文件夹？(y/n)`，输入 `y` 拆成 `日期1/`、`日期2/`，输入 `n` 保持原样（至多拆两场）。
+（也可以直接双击仓库里的 `oneclick_import.bat`，效果相同；加 `--dry` 可先预览，如
+`oneclick_import.bat --dry`。）
+快捷方式只是指向本仓库的 `oneclick_import.bat`，仓库换位置后重新运行一次上面的命令即可。
+（也可以运行 `run_all.bat` 选 `[9]` 来创建/刷新桌面图标。）
+
+### 双击 run_all.bat（选择菜单）
 
 ```
 [1] 完整流程（每步确认）
@@ -66,6 +87,10 @@ TEMP_ROOT    = Path("E:/_Photo/temp")           # 目标根目录
 [4] 仅复制文件
 [5] 仅重命名照片+视频
 [6] 查看导入去重库
+[7] 焦段分析 — 分析一批照片的焦段/光圈
+[8] 综合焦段分析 — 对比 BW2026 + Redland
+[9] 在桌面创建「一键导入照片」快捷方式
+[10] 两场拍摄拆分检查 — 时间轴有大空档时拆成两个日期文件夹
 ```
 
 ### 命令行
@@ -73,7 +98,7 @@ TEMP_ROOT    = Path("E:/_Photo/temp")           # 目标根目录
 ```bash
 # 完整流程
 python run_all.py
-python run_all.py --yes     # 自动确认
+python run_all.py --yes     # 自动确认（最后的「两场拆分」仍会问 y/n）
 
 # 预览模式（只看不改）
 python run_all.py --dry
@@ -81,6 +106,7 @@ python run_all.py --dry
 # 跳过某些步骤
 python run_all.py --skip-copy
 python run_all.py --skip-rename
+python run_all.py --skip-split     # 不做「两场拍摄拆分」检查
 ```
 
 ### 单独执行各步骤
@@ -94,6 +120,13 @@ python rename_photos.py --dry              # 照片重命名预览
 python rename_photos.py --go               # 照片重命名执行
 python rename_videos.py --dry              # 视频重命名预览
 python rename_videos.py --go               # 视频重命名执行
+
+# 两场拍摄拆分（时间轴大空档 → 询问 y/n）
+python split_sessions.py --dry             # 只检测并报告（不改动）
+python split_sessions.py --go              # 检测 → 询问 y/n → 拆分
+python split_sessions.py --yes             # 检测 → 直接拆分（不询问）
+python split_sessions.py --dir "E:/_Photo/temp/0924" --go   # 对指定批次操作
+python split_sessions.py --gap-minutes 180 --go             # 自定义空档阈值（分钟）
 
 # 对任意目录操作（如批次已从 temp 归档到别处）
 python rename_photos.py --dir "E:/_Photo/_摄影会/2026/0924 某活动" --dry
@@ -184,6 +217,44 @@ C1572.MP4     →  2026-09-09_09-53-43.mp4  （配套 XML 同步改名）
 
 同秒拍摄自动追加 `_01`、`_02`… 后缀，不另建子文件夹。
 
+### Step 3 — 两场拍摄拆分检查
+
+一次导入可能混进两场不同的活（比如上午一场、晚上一场，或连着两天各一场）。
+复制 + 重命名完成后，`split_sessions.py` 会按时间轴看一遍：
+
+- 时间从哪来：已重命名的文件直接读文件名；未重命名的回退到照片 EXIF / CLIP 视频的 `creation_time`。
+- 找出**相邻两个文件之间最大的时间空档**；只有空档 ≥ 阈值、且两边各至少有 `SESSION_MIN_FILES` 个文件时
+  才会提示（阈值在 `config.py` 的 `SESSION_GAP_MINUTES`，默认 240 分钟 = 4 小时）。
+- 发现空档后在 cmd 里问：
+
+```
+⏱  发现最大空档 1 天 8 小时：09-24 11:00 → 09-25 19:00
+💡  很可能是两场摄影，可以拆成两个文件夹（至多拆两场）：
+    2026-09-24/   3 个文件   2026-09-24 10:00 ~ 2026-09-24 11:00
+    2026-09-25/   3 个文件   2026-09-25 19:00 ~ 2026-09-25 20:00
+
+是否拆分成两个文件夹？(y/n):
+```
+
+输入 `y` → 按两场分别移入两个以日期命名的文件夹（`CLIP/`、`DJI/` 子结构保留）：
+
+```
+E:\_Photo\temp\0924\
+├── 2026-09-24\        ← 第一场
+│   ├── 2026-09-24_10-00-00.jpg
+│   └── CLIP\
+└── 2026-09-25\        ← 第二场
+    ├── 2026-09-25_19-00-00.jpg
+    └── DJI\
+```
+
+输入 `n`（或直接回车）→ 什么都不动。同一天两场时文件夹名用 `2026-09-10-1` / `2026-09-10-2` 区分；
+**至多拆两场**（只按最大那个空档切一刀）。
+
+一键模式（`run_all.py --yes`）也会问这一句，因为「是不是两场」需要人判断：
+不想被问就把 `config.py` 里 `ASK_SPLIT_SESSIONS = False`，或加 `--skip-split`。
+拆分后用 `import_db.py` 里的记录会自动跟着改到新目录（`--no-db` 可关闭）。
+
 ## 注意事项
 
 - **先 `--dry` 预览再 `--go` 执行** — 永远不要跳过预览
@@ -191,9 +262,10 @@ C1572.MP4     →  2026-09-09_09-53-43.mp4  （配套 XML 同步改名）
 - 导入去重库 `imports.db` 与目标目录无关，跨日期/跨批次生效；误判可用 `python import_db.py --forget <文件名>` 删除记录后重跑
 - 批次从 `temp/<mmdd>` 归档到别处后，建议执行一次 `import_db.py --relocate <旧目录> <新目录>`，
   让记录里的目标目录保持准确（否则下次导入会提示"⚠ 但该目标目录已不存在"）
+- Step 3 拆分只**移动**批次内的文件（不删除、不复制），判断错了把两个日期文件夹里的文件移回上一级即可
 - 源按文件夹自动定位，只在 `LOOKUP_DRIVES` 盘中查找；盘未插入/找不到文件夹就跳过
 - 照片依赖 EXIF 数据，不含 EXIF 的图片/截图不支持
-- 本工具只**复制**和**重命名**，从不删除文件
+- 本工具只**复制**、**重命名**和（拆分时）**移动**文件，从不删除文件
 
 ## 文档
 
